@@ -9,8 +9,8 @@
 ---
 
 ## 🌍 Bilingual Documentation / التوثيق بالعربية
-Looking for Arabic instructions? View our [Bilingual Manual](docs.php).
-هل تبحث عن التعليمات بالعربية؟ تفضل بزيارة [دليل المستخدم المزدوج](docs.php).
+Looking for Arabic instructions? View our [Bilingual Manual](docs.html).
+هل تبحث عن التعليمات بالعربية؟ تفضل بزيارة [دليل المستخدم المزدوج](docs.html).
 
 ---
 
