@@ -1,11 +1,15 @@
 <?php
 /**
- * Benchmark: GD vs Imagick
+ * Benchmark: GD vs Imagick (Manual Loading)
  */
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/src/ImagePro.php';
+require_once __DIR__ . '/src/Enums/ImageFilter.php';
+require_once __DIR__ . '/src/Enums/WatermarkPosition.php';
+require_once __DIR__ . '/src/Exceptions/ImageProException.php';
+
 use ImagePro\ImagePro;
 
-$source = 'sample_nature_source.png'; // We'll rename the generated image
+$source = 'sample_nature_source.png';
 if (!file_exists($source)) die("Source not found\n");
 
 function benchmark($driver) {
@@ -13,17 +17,17 @@ function benchmark($driver) {
     $start = microtime(true);
     $memStart = memory_get_usage();
     
-    // Performance test: 10 resizes
-    for ($i = 0; $i < 5; $i++) {
+    // Performance test: 3 operations
+    for ($i = 0; $i < 3; $i++) {
         $img = ImagePro::open($source);
-        // Force driver (we need to bypass auto-detection for the test)
+        
+        // Manual driver injection for test
         $reflector = new ReflectionClass($img);
         $prop = $reflector->getProperty('driver');
         $prop->setAccessible(true);
         $prop->setValue($img, $driver);
         
         $img->resize(800)
-            ->stripMetadata()
             ->save("bench_{$driver}_{$i}.webp", quality: 80);
     }
     
@@ -33,13 +37,13 @@ function benchmark($driver) {
     ];
 }
 
-echo "Running benchmarks...\n";
+echo "Running benchmarks (3 operations)...\n";
 $gd = benchmark('gd');
 $imagick = benchmark('imagick');
 
 $results = "
 ## Performance Benchmark (v2.1.0)
-| Engine  | Execution Time (5 ops) | Avg Memory Delta |
+| Engine  | Execution Time (3 ops) | Avg Memory Delta |
 | ------- | ----------------------| ---------------- |
 | GD      | " . number_format($gd['time'], 3) . "s | " . number_format($gd['memory'], 2) . "MB |
 | Imagick | " . number_format($imagick['time'], 3) . "s | " . number_format($imagick['memory'], 2) . "MB |
