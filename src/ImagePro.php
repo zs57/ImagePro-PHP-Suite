@@ -13,8 +13,8 @@ use ImagePro\Exceptions\HardenedSecurityException;
 use ImagePro\Exceptions\UnsupportedFormatException;
 
 /**
- * ImagePro v2.0.0 - Professional Reality (zs57)
- * Lightweight PHP image processing library for GD and Imagick.
+ * ImagePro v2.1.0 - Ultimate Polish (zs57)
+ * Professional image manipulation suite with multi-driver parity.
  */
 class ImagePro
 {
@@ -43,6 +43,18 @@ class ImagePro
             throw new ImageProException("Invalid upload file.");
         }
         return new self($file['tmp_name']);
+    }
+
+    /**
+     * Fluent Batch Processing
+     */
+    public static function batch(array $paths): array
+    {
+        $instances = [];
+        foreach ($paths as $path) {
+            $instances[] = self::open($path);
+        }
+        return $instances;
     }
 
     private function __construct(string $path)
@@ -93,12 +105,12 @@ class ImagePro
 
     private function detectDriver(): void
     {
-        if (function_exists('gd_info')) {
-            $this->driver = 'gd';
-        } elseif (class_exists('\Imagick')) {
+        if (class_exists('\Imagick')) {
             $this->driver = 'imagick';
+        } elseif (function_exists('gd_info')) {
+            $this->driver = 'gd';
         } else {
-            throw new ImageProException("No compatible drivers found.");
+            throw new ImageProException("No compatible drivers found (GD or Imagick required).");
         }
     }
 
@@ -153,6 +165,23 @@ class ImagePro
         return $this;
     }
 
+    public function crop(int $width, int $height, int $x = 0, int $y = 0): self
+    {
+        if ($this->driver === 'gd') {
+            $new = imagecreatetruecolor($width, $height);
+            if (in_array($this->mime, ['image/png', 'image/webp'], true)) {
+                imagealphablending($new, false);
+                imagesavealpha($new, true);
+            }
+            imagecopy($new, $this->image, 0, 0, $x, $y, $width, $height);
+            imagedestroy($this->image);
+            $this->image = $new;
+        } else {
+            $this->image->cropImage($width, $height, $x, $y);
+        }
+        return $this;
+    }
+
     public function autoOrient(): self
     {
         if ($this->driver === 'imagick') {
@@ -175,6 +204,52 @@ class ImagePro
             $this->image->stripImage();
         }
         return $this;
+    }
+
+    public function watermark(string $text, WatermarkPosition $pos, array $options = []): self
+    {
+        $fontSize = $options['size'] ?? 20;
+        $color = $options['color'] ?? '#ffffff';
+        $margin = $options['margin'] ?? 20;
+
+        if ($this->driver === 'gd') {
+            // Simplified GD Watermark (Text only)
+            $w = $this->getWidth();
+            $h = $this->getHeight();
+            $rgb = $this->hexToRgb($color);
+            $gdColor = imagecolorallocate($this->image, $rgb[0], $rgb[1], $rgb[2]);
+            
+            // Approximate position
+            $x = $margin; $y = $margin + $fontSize;
+            if ($pos === WatermarkPosition::BOTTOM_RIGHT) {
+                $x = $w - ($fontSize * strlen($text) * 0.6) - $margin;
+                $y = $h - $margin;
+            }
+            imagestring($this->image, 5, (int)$x, (int)$y, $text, $gdColor);
+        } else {
+            $draw = new \ImagickDraw();
+            $draw->setFillColor(new \ImagickPixel($color));
+            $draw->setFontSize($fontSize);
+            $gravity = match($pos) {
+                WatermarkPosition::TOP_LEFT => \Imagick::GRAVITY_NORTHWEST,
+                WatermarkPosition::TOP_RIGHT => \Imagick::GRAVITY_NORTHEAST,
+                WatermarkPosition::BOTTOM_LEFT => \Imagick::GRAVITY_SOUTHWEST,
+                WatermarkPosition::BOTTOM_RIGHT => \Imagick::GRAVITY_SOUTHEAST,
+                WatermarkPosition::CENTER => \Imagick::GRAVITY_CENTER,
+            };
+            $draw->setGravity($gravity);
+            $this->image->annotateImage($draw, $margin, $margin, 0, $text);
+        }
+        return $this;
+    }
+
+    private function hexToRgb($hex): array {
+        $hex = str_replace("#", "", $hex);
+        return [
+            hexdec(substr($hex, 0, 2)),
+            hexdec(substr($hex, 2, 2)),
+            hexdec(substr($hex, 4, 2))
+        ];
     }
 
     public function filter(ImageFilter $filter): self
