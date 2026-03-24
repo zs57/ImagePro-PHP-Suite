@@ -13,7 +13,8 @@ use ImagePro\Exceptions\HardenedSecurityException;
 use ImagePro\Exceptions\UnsupportedFormatException;
 
 /**
- * ImagePro v1.0.0 - Global Release (zs57)
+ * ImagePro v2.0.0 - Professional Reality (zs57)
+ * Lightweight PHP image processing library for GD and Imagick.
  */
 class ImagePro
 {
@@ -27,6 +28,21 @@ class ImagePro
     public static function open(string $path): self
     {
         return new self($path);
+    }
+
+    public static function fromString(string $data): self
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'imgpro_');
+        file_put_contents($tmp, $data);
+        return new self($tmp);
+    }
+
+    public static function fromUpload(array $file): self
+    {
+        if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            throw new ImageProException("Invalid upload file.");
+        }
+        return new self($file['tmp_name']);
     }
 
     private function __construct(string $path)
@@ -70,7 +86,7 @@ class ImagePro
         }
 
         if (!$mime || !str_starts_with($mime, 'image/')) {
-            throw new HardenedSecurityException("Invalid image source.");
+            throw new HardenedSecurityException("Unsupported or invalid image format.");
         }
         return $mime;
     }
@@ -113,7 +129,7 @@ class ImagePro
         }
     }
 
-    public function resize(int $width, ?int $height = null, string $mode = 'stretch'): self
+    public function resize(int $width, ?int $height = null): self
     {
         $origW = $this->getWidth();
         $origH = $this->getHeight();
@@ -189,6 +205,19 @@ class ImagePro
         imagefilter($this->image, IMG_FILTER_COLORIZE, 90, 60, 40);
     }
 
+    public function compressToSize(int $targetBytes, string $format = 'webp'): self
+    {
+        $quality = 90;
+        $tmp = tempnam(sys_get_temp_dir(), 'imgpro_sz_');
+        while ($quality > 10) {
+            $this->save($tmp, $format, $quality);
+            if (filesize($tmp) <= $targetBytes) break;
+            $quality -= 10;
+        }
+        @unlink($tmp);
+        return $this;
+    }
+
     public function save(string $dest, ?string $format = null, int $quality = 82): bool
     {
         $quality = max(0, min(100, $quality));
@@ -209,6 +238,27 @@ class ImagePro
             $this->image->setCompressionQuality($quality);
             return $this->image->writeImage($dest);
         }
+    }
+
+    public function toString(string $format = 'webp', int $quality = 82): string
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'imgpro_str_');
+        $this->save($tmp, $format, $quality);
+        $data = file_get_contents($tmp);
+        @unlink($tmp);
+        return $data;
+    }
+
+    public function output(string $format = 'webp', int $quality = 82): void
+    {
+        $mime = match(strtolower($format)) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            default => 'image/jpeg'
+        };
+        header("Content-Type: $mime");
+        echo $this->toString($format, $quality);
     }
 
     public function getWidth(): int 
