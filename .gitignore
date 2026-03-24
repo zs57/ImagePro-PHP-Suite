@@ -1,0 +1,4 @@
+/uploads/*
+/processed/*
+.DS_Store
+*.log
