@@ -39,31 +39,39 @@ $t = $trans[$lang];
 
 $uploadDir = 'uploads/';
 $processDir = 'processed/';
-$results = null;
+$gdSupported = function_exists('gd_info');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
-    $file = $_FILES['image'];
-    if($file['error'] == 0) {
-        $img = ImagePro::open($file['tmp_name']);
-        $uniqueName = uniqid('img_') . '.webp';
-        $webpPath = $processDir . $uniqueName;
+    if (!$gdSupported) {
+        $error = ($lang == 'ar') ? "خطأ: مكتبة GD غير مفعلة في السيرفر. يرجى تفعيلها من ملف php.ini" : "Error: PHP GD library is not enabled on this server.";
+    } else {
+        $file = $_FILES['image'];
+        if($file['error'] == 0) {
+            try {
+                $img = ImagePro::open($file['tmp_name']);
+                $uniqueName = uniqid('img_') . '.webp';
+                $webpPath = $processDir . $uniqueName;
+                
+                $startTime = microtime(true);
+                $img->autoOptimize()
+                    ->filter(ImageFilter::GREYSCALE)
+                    ->watermark("ImagePro 3.0", WatermarkPosition::CENTER)
+                    ->convertToWebP($webpPath, 75);
+                $endTime = microtime(true);
 
-        $startTime = microtime(true);
-        $img->autoOptimize()
-            ->filter(ImageFilter::GREYSCALE)
-            ->watermark("ImagePro 3.0", WatermarkPosition::CENTER)
-            ->convertToWebP($webpPath, 75);
-        $endTime = microtime(true);
-
-        $results = [
-            'original' => ['url' => $file['tmp_name'], 'size' => round($file['size'] / 1024, 2) . ' KB'],
-            'processed' => [
-                'url' => $webpPath,
-                'size' => round(filesize($webpPath) / 1024, 2) . ' KB',
-                'saving' => round((1 - (filesize($webpPath) / $file['size'])) * 100, 1) . '%',
-                'time' => round(($endTime - $startTime) * 1000, 2) . 'ms'
-            ]
-        ];
+                $results = [
+                    'original' => ['url' => $file['tmp_name'], 'size' => round($file['size'] / 1024, 2) . ' KB'],
+                    'processed' => [
+                        'url' => $webpPath, 
+                        'size' => round(filesize($webpPath) / 1024, 2) . ' KB',
+                        'saving' => round((1 - (filesize($webpPath) / $file['size'])) * 100, 1) . '%',
+                        'time' => round(($endTime - $startTime) * 1000, 2) . 'ms'
+                    ]
+                ];
+            } catch (Exception $e) {
+                $error = "Error: " . $e->getMessage();
+            }
+        }
     }
 }
 ?>

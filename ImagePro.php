@@ -30,7 +30,7 @@ enum WatermarkPosition {
 
 class ImagePro
 {
-    private \GdImage $image;
+    private $image; // Removed \GdImage type hint for compatibility
     private array $info;
     private readonly string $sourcePath;
     private readonly int $type;
@@ -46,6 +46,9 @@ class ImagePro
 
     private function __construct(string $sourcePath)
     {
+        if (!function_exists('gd_info')) {
+            throw new ImageProcessingException("PHP GD extension is not enabled on this server.");
+        }
         if (!file_exists($sourcePath) || !is_readable($sourcePath)) {
             throw new ImageNotFoundException("Source image not found or not readable: {$sourcePath}");
         }
@@ -281,7 +284,7 @@ class ImagePro
         return $this->save($dest, $quality, IMAGETYPE_WEBP);
     }
 
-    private function handleAlpha(\GdImage $new): void
+    private function handleAlpha($new): void
     {
         if (in_array($this->type, [IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
             imagealphablending($new, false);
