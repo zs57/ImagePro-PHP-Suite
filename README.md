@@ -1,37 +1,35 @@
-# ImagePro v6.00 (Professional Library)
+# ImagePro v1.0.0 (Global Release)
 
-**ImagePro v6.00** is a certified, production-ready image processing library for PHP 8.1+. It provides seamless abstraction between **GD** and **Imagick**, ensuring that your application remains functional across all server environments.
+[![CI](https://github.com/zs57/ImagePro-PHP-Suite/actions/workflows/ci.yml/badge.svg)](https://github.com/zs57/ImagePro-PHP-Suite/actions)
+[![Latest Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+**ImagePro v1.0.0** is a professional, production-ready image processing library for PHP 8.1+. It provides seamless abstraction between **GD** and **Imagick**, delivering enterprise-grade resiliency and standardized output.
 
 ---
 
 ## 🏛️ Professional Standards
-- **PHP 8.1+ Compatibility**: Fully verified `GdImage` object management.
-- **Multi-Driver Parity**: Identical results whether using GD or Imagick.
-- **Configurable Resources**: Fine-grained control over memory limits and quality via `withMemoryLimit()`.
-- **Advanced Processing**: Full implementation of `resize()`, `filter()`, and `stripMetadata()`.
+- **PSR-4 Compliant**: `ImagePro\` namespace architecture.
+- **PHP 8.1+ Optimized**: Native Enums and `GdImage` object support.
+- **Driver Parity**: Identical results on both GD and Imagick engines.
+- **Hardened Security**: Deep MIME binary inspection.
 
-## 📂 Project Structure
-- `src/ImagePro.php` - The core multi-driver engine.
-- `src/docs.html` - Standalone Developer Manual.
-- `LICENSE` - MIT License.
+## 🛠️ Installation
+```bash
+composer require zs57/imagepro
+```
+*Or manual inclusion:* `require_once 'vendor/autoload.php';`
 
-## 🛠️ Quick Start
+## 🚀 Usage
 ```php
-require_once 'src/ImagePro.php';
-use ImagePro\Enterprise\ImagePro;
+use ImagePro\ImagePro;
 
 ImagePro::open('source.jpg')
-    ->withMemoryLimit('256M')
-    ->resize(1200)
-    ->save('optimized.webp', quality: 85);
+    ->autoOrient()
+    ->stripMetadata()
+    ->resize(800)
+    ->save('output.webp', quality: 80);
 ```
 
-This project is part of the **zs57 Open Source Initiative**.
-
 ## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-<p align="center">
-  <img src="https://img.shields.io/badge/Maintained%20by-zs57-blue?style=for-the-badge" alt="Maintained by zs57">
-</p>
+MIT License. Part of the **zs57 Open Source Initiative**.
