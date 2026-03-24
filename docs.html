@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="mainHtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Developer Manual | ImagePro</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        [data-show-lang] { display: none; }
+        .active-lang { display: block !important; }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 1200px;">
+        <header style="text-align: right; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="index.php" style="color: var(--text-dim); text-decoration: none;">← <span data-show-lang="ar">العودة</span><span data-show-lang="en">Back</span></a>
+                <div>
+                    <button onclick="setLang('ar')" class="lang-btn" id="btn-ar">AR</button>
+                    <button onclick="setLang('en')" class="lang-btn" id="btn-en">EN</button>
+                </div>
+            </div>
+            <h1 style="margin-top: 1rem; font-size: 2rem;">
+                <span data-show-lang="ar">تعليمات المطورين | ImagePro</span>
+                <span data-show-lang="en">Developer Manual | ImagePro</span>
+            </h1>
+        </header>
+
+        <div class="docs-container">
+            <aside class="docs-sidebar">
+                <a href="#intro" class="docs-nav-link active"><span data-show-lang="ar">المقدمة</span><span data-show-lang="en">Introduction</span></a>
+                <a href="#install" class="docs-nav-link"><span data-show-lang="ar">التثبيت</span><span data-show-lang="en">Installation</span></a>
+                <a href="#methods" class="docs-nav-link"><span data-show-lang="ar">الوظائف</span><span data-show-lang="en">Methods</span></a>
+            </aside>
+
+            <main class="docs-content">
+                <section id="intro">
+                    <h2 data-show-lang="ar">المرحلة الأولى: البداية</h2>
+                    <h2 data-show-lang="en">Phase 1: Getting Started</h2>
+                    <p data-show-lang="ar">مرحباً بك في دليل استخدام أداة ImagePro. هذه الأداة مصممة لتكون بسيطة ولكنها قوية جداً.</p>
+                    <p data-show-lang="en">Welcome to the ImagePro guide. This tool is designed to be simple yet incredibly powerful.</p>
+                </section>
+
+                <section id="install">
+                    <h2 data-show-lang="ar">كيفية التثبيت</h2>
+                    <h2 data-show-lang="en">Installation</h2>
+                    <p data-show-lang="ar">كل ما تحتاجه هو استدعاء الملف في مشروعك:</p>
+                    <p data-show-lang="en">Simply include the file in your project:</p>
+                    <div class="code-block">
+                        <span class="code-keyword">require_once</span> <span class="code-string">'ImagePro.php'</span>;
+                    </div>
+                </section>
+
+                <section id="methods">
+                    <h2 data-show-lang="ar">الوظائف البرمجية</h2>
+                    <h2 data-show-lang="en">Class Methods</h2>
+                    <div class="code-block">
+                        <span class="code-func">ImagePro::open</span>(<span class="code-string">'photo.jpg'</span>)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;-><span class="code-func">autoOptimize</span>()<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;-><span class="code-func">filter</span>(ImageFilter::<span class="code-func">SEPIA</span>)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;-><span class="code-func">convertToWebP</span>(<span class="code-string">'output.webp'</span>);
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <footer style="margin-top: 5rem; text-align: center; color: var(--text-dim); font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+            Proudly maintained by <span style="color: var(--accent);">zs57</span>
+        </footer>
+    </div>
+
+    <script>
+        function setLang(l) {
+            const html = document.getElementById('mainHtml');
+            html.lang = l;
+            html.dir = (l === 'ar' ? 'rtl' : 'ltr');
+            
+            document.querySelectorAll('[data-show-lang]').forEach(el => {
+                el.classList.remove('active-lang');
+                if (el.getAttribute('data-show-lang') === l) el.classList.add('active-lang');
+            });
+
+            document.getElementById('btn-ar').classList.toggle('active', l === 'ar');
+            document.getElementById('btn-en').classList.toggle('active', l === 'en');
+            localStorage.setItem('docs-lang', l);
+        }
+
+        // Init
+        const savedLang = localStorage.getItem('docs-lang') || 'ar';
+        setLang(savedLang);
+    </script>
+</body>
+</html>
