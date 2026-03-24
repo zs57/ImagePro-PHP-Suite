@@ -70,19 +70,21 @@
 
             <main class="docs-content">
                 <section id="intro">
-                    <h2 data-show-lang="ar">المرحلة الأولى: البداية</h2>
-                    <h2 data-show-lang="en">Phase 1: Getting Started</h2>
-                    <p data-show-lang="ar">مرحباً بك في دليل استخدام أداة ImagePro. هذه الأداة مصممة لتكون مكتبة PHP احترافية (Class-Only) لمعالجة الصور بأعلى معايير الأمان والسرعة.</p>
-                    <p data-show-lang="en">Welcome to the ImagePro guide. This tool is designed as a professional Class-Only PHP library for image processing with top-tier security and speed.</p>
+                    <h2 data-show-lang="ar">المرحلة الأولى: البداية (Elite Edition)</h2>
+                    <h2 data-show-lang="en">Phase 1: Getting Started (Elite Edition)</h2>
+                    <p data-show-lang="ar">مرحباً بك في النسخة الاحترافية (Elite v5.00) من أداة ImagePro. تم هندسة هذه النسخة لتكون الأقوى والأكثر أماناً بفضل نظام **Hardened Security** والـ **Namespacing**.</p>
+                    <p data-show-lang="en">Welcome to the ImagePro Elite Edition (v5.00). This version is engineered for maximum security and power with its **Hardened Security** layer and professional **Namespacing**.</p>
                 </section>
 
                 <section id="install">
-                    <h2 data-show-lang="ar">كيفية التثبيت</h2>
-                    <h2 data-show-lang="en">Installation</h2>
-                    <p data-show-lang="ar">كل ما تحتاجه هو تضمين ملف الكلاس في مشروعك:</p>
-                    <p data-show-lang="en">Simply include the class file in your project:</p>
+                    <h2 data-show-lang="ar">كيفية الاستخدام (Namespaced)</h2>
+                    <h2 data-show-lang="en">Usage (Namespaced)</h2>
+                    <p data-show-lang="ar">تحتاج لاستخدام مساحة العمل (Namespace) لضمان عدم التعارض:</p>
+                    <p data-show-lang="en">Use the official namespace to ensure compatibility:</p>
                     <div class="code-block">
-                        <span class="code-keyword">require_once</span> <span class="code-string">'src/ImagePro.php'</span>;
+                        <span class="code-keyword">use</span> <span class="code-func">ImagePro\Enterprise\ImagePro</span>;<br>
+                        <span class="code-keyword">use</span> <span class="code-func">ImagePro\Enterprise\ImageFilter</span>;<br><br>
+                        <span class="code-func">ImagePro::open</span>(<span class="code-string">'img.jpg'</span>)-><span class="code-func">filter</span>(ImageFilter::<span class="code-func">SHARPEN</span>);
                     </div>
                 </section>
 
