@@ -1,4 +1,4 @@
-/uploads/*
-/processed/*
-.DS_Store
-*.log
+vendor/
+.phpunit.result.cache
+*.tmp
+tests/_data/output/*

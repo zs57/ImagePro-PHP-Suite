@@ -1,0 +1,7 @@
+* text=auto
+*.php text
+*.md text
+*.html text
+*.png binary
+*.jpg binary
+*.webp binary
