@@ -22,7 +22,7 @@ We provide a standalone, high-performance manual for integration:
 
 ## 📂 Project Structure
 - `src/ImagePro.php` - The core multi-driver engine.
-- `docs.html` - Standalone Developer Manual.
+- `src/docs.html` - Standalone Developer Manual.
 - `LICENSE` - MIT License.
 
 ## 🛠️ Quick Start
