@@ -39,8 +39,16 @@ ImagePro::open('source.jpg')
 - `docs.php` - Comprehensive Developer Manual.
 - `/assets` - Visual identity and styling.
 
-## 🤝 Contribution
-Designed and architected by Antigravity AI. Feel free to fork and enhance!
+## 🛠️ Developer Spotlight: zs57
+This project is part of the **zs57 Open Source Initiative**, focused on bringing enterprise-grade tools to the global developer community. 
+
+- **Vision**: Security, Performance, and Professionalism.
+- **Support**: For custom integrations or enterprise support, contact **zs57** via GitHub.
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+<p align="center">
+  <img src="https://img.shields.io/badge/Maintained%20by-zs57-blue?style=for-the-badge" alt="Maintained by zs57">
+</p>

@@ -121,10 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 2rem;">
-                <a href="<?php echo $results['processed']['url']; ?>" download class="btn-optimize" style="text-decoration: none;"><?php echo $t['download']; ?></a>
+        <footer>
+            <div style="margin-top: 5rem; text-align: center; border-top: 1px solid var(--border); padding-top: 2rem; color: var(--text-dim); font-size: 0.85rem;">
+                <p>Designed & Engineered by <span style="color: var(--accent); font-weight: 700;">zs57</span></p>
+                <p style="font-size: 0.7rem; margin-top: 0.5rem; opacity: 0.5;">Enterprise Image Optimization Suite © 2026</p>
             </div>
-        <?php endif; ?>
+        </footer>
     </div>
 </body>
 </html>
