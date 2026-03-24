@@ -2,37 +2,22 @@
 
 declare(strict_types=1);
 
-namespace ImagePro\Enterprise;
+namespace ImagePro;
+
+use ImagePro\Enums\ImageFilter;
+use ImagePro\Enums\WatermarkPosition;
+use ImagePro\Exceptions\ImageProException;
+use ImagePro\Exceptions\ImageNotFoundException;
+use ImagePro\Exceptions\ImageProcessingException;
+use ImagePro\Exceptions\HardenedSecurityException;
+use ImagePro\Exceptions\UnsupportedFormatException;
 
 /**
- * ImagePro v6.00 - Professional Library (zs57)
- * High-performance, multi-driver, namespaced image optimization suite.
+ * ImagePro v1.0.0 - Global Release (zs57)
  */
-
-// --- Granular Architecture Exceptions ---
-class ImageProException extends \RuntimeException {}
-class ImageNotFoundException extends ImageProException {}
-class ImageProcessingException extends ImageProException {}
-class HardenedSecurityException extends ImageProException {}
-class UnsupportedFormatException extends ImageProException {}
-
-// --- Namespaced Enums ---
-enum ImageFilter: string {
-    case GREYSCALE = 'grey';
-    case SEPIA = 'sepia';
-    case BLUR = 'blur';
-    case SHARPEN = 'sharpen';
-    case CONTRAST = 'contrast';
-}
-
-enum WatermarkPosition {
-    case TOP_LEFT; case TOP_RIGHT; case BOTTOM_LEFT; case BOTTOM_RIGHT; case CENTER;
-}
-
 class ImagePro
 {
-    private $image; // GdImage object or Imagick object
-    private array $info;
+    private $image; 
     private readonly string $source;
     private readonly string $mime;
     private string $driver = 'gd';
@@ -49,7 +34,7 @@ class ImagePro
         $this->originalMemory = ini_get('memory_limit');
         
         if (!file_exists($path) || !is_readable($path)) {
-            throw new ImageNotFoundException("Source image not found or not readable: $path");
+            throw new ImageNotFoundException("Source image not found: $path");
         }
 
         $this->source = $path;
@@ -66,7 +51,7 @@ class ImagePro
         }
     }
 
-    public function withMemoryLimit(string $limit): self
+    public function withMemoryLimit(string $limit = '512M'): self
     {
         $this->temporaryMemoryLimit = $limit;
         ini_set('memory_limit', $limit);
@@ -85,7 +70,7 @@ class ImagePro
         }
 
         if (!$mime || !str_starts_with($mime, 'image/')) {
-            throw new HardenedSecurityException("File is not a valid image format.");
+            throw new HardenedSecurityException("Invalid image source.");
         }
         return $mime;
     }
@@ -97,7 +82,7 @@ class ImagePro
         } elseif (class_exists('\Imagick')) {
             $this->driver = 'imagick';
         } else {
-            throw new ImageProException("No compatible drivers (GD or Imagick) found on this server.");
+            throw new ImageProException("No compatible drivers found.");
         }
     }
 
@@ -108,14 +93,13 @@ class ImagePro
                 'image/jpeg' => @imagecreatefromjpeg($this->source),
                 'image/png'  => @imagecreatefrompng($this->source),
                 'image/webp' => @imagecreatefromwebp($this->source),
-                default      => throw new UnsupportedFormatException("GD Driver does not support: $this->mime"),
+                default      => throw new UnsupportedFormatException("Unsupported: $this->mime"),
             };
 
             if (!$this->image instanceof \GdImage) {
-                throw new ImageProcessingException("Failed to decode image using GD: $this->source");
+                throw new ImageProcessingException("Failed to decode image.");
             }
 
-            // Alpha handling for transparent formats
             if (in_array($this->mime, ['image/png', 'image/webp'], true)) {
                 imagealphablending($this->image, true);
                 imagesavealpha($this->image, true);
@@ -124,15 +108,16 @@ class ImagePro
             try {
                 $this->image = new \Imagick($this->source);
             } catch (\Exception $e) {
-                throw new ImageProcessingException("Failed to load image using Imagick: " . $e->getMessage());
+                throw new ImageProcessingException($e->getMessage());
             }
         }
     }
 
-    public function resize(int $width, ?int $height = null): self
+    public function resize(int $width, ?int $height = null, string $mode = 'stretch'): self
     {
         $origW = $this->getWidth();
         $origH = $this->getHeight();
+
         if ($height === null) {
             $height = (int) round($origH * ($width / $origW));
         }
@@ -148,6 +133,30 @@ class ImagePro
             $this->image = $new;
         } else {
             $this->image->resizeImage($width, $height, \Imagick::FILTER_LANCZOS, 1);
+        }
+        return $this;
+    }
+
+    public function autoOrient(): self
+    {
+        if ($this->driver === 'imagick') {
+            $this->image->autoOrient();
+        } elseif ($this->driver === 'gd' && $this->mime === 'image/jpeg' && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($this->source);
+            $ort = $exif['Orientation'] ?? 1;
+            switch($ort) {
+                case 3: $this->image = imagerotate($this->image, 180, 0); break;
+                case 6: $this->image = imagerotate($this->image, -90, 0); break;
+                case 8: $this->image = imagerotate($this->image, 90, 0); break;
+            }
+        }
+        return $this;
+    }
+
+    public function stripMetadata(): self
+    {
+        if ($this->driver === 'imagick') {
+            $this->image->stripImage();
         }
         return $this;
     }
@@ -180,51 +189,26 @@ class ImagePro
         imagefilter($this->image, IMG_FILTER_COLORIZE, 90, 60, 40);
     }
 
-    public function stripMetadata(): self
-    {
-        if ($this->driver === 'imagick') {
-            $this->image->stripImage();
-        }
-        return $this;
-    }
-
-    public function save(string $dest, ?int $type = null, int $quality = 82): bool
+    public function save(string $dest, ?string $format = null, int $quality = 82): bool
     {
         $quality = max(0, min(100, $quality));
         $dir = dirname($dest);
-        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
-            throw new ImageProException("Directory creation failed: $dir");
-        }
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        $format = ($format) ? strtolower($format) : pathinfo($dest, PATHINFO_EXTENSION);
 
         if ($this->driver === 'gd') {
-            $type ??= match($this->mime) {
-                'image/jpeg' => IMAGETYPE_JPEG,
-                'image/png'  => IMAGETYPE_PNG,
-                'image/webp' => IMAGETYPE_WEBP,
-                default      => IMAGETYPE_JPEG
-            };
-            return match ($type) {
-                IMAGETYPE_JPEG => imagejpeg($this->image, $dest, $quality),
-                IMAGETYPE_PNG  => imagepng($this->image, $dest, (int) round((100 - $quality) / 100 * 9)),
-                IMAGETYPE_WEBP => imagewebp($this->image, $dest, $quality),
-                default        => throw new UnsupportedFormatException("Unsupported save type for GD."),
+            return match ($format) {
+                'jpg', 'jpeg' => imagejpeg($this->image, $dest, $quality),
+                'png'  => imagepng($this->image, $dest, (int) round((100 - $quality) / 100 * 9)),
+                'webp' => imagewebp($this->image, $dest, $quality),
+                default => imagejpeg($this->image, $dest, $quality),
             };
         } else {
-            $format = match ($type) {
-                IMAGETYPE_JPEG => 'jpg',
-                IMAGETYPE_PNG  => 'png',
-                IMAGETYPE_WEBP => 'webp',
-                default        => 'jpg'
-            };
             $this->image->setImageFormat($format);
             $this->image->setCompressionQuality($quality);
             return $this->image->writeImage($dest);
         }
-    }
-
-    public function convertToWebP(string $dest, int $quality = 82): bool
-    {
-        return $this->save($dest, IMAGETYPE_WEBP, $quality);
     }
 
     public function getWidth(): int 
