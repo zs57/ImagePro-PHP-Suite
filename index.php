@@ -44,7 +44,7 @@ $results = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
     $file = $_FILES['image'];
     if($file['error'] == 0) {
-        $img = new ImagePro($file['tmp_name']);
+        $img = ImagePro::open($file['tmp_name']);
         $uniqueName = uniqid('img_') . '.webp';
         $webpPath = $processDir . $uniqueName;
 
