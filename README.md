@@ -1,8 +1,16 @@
-# 🖼️ ImagePro Enterprise v3.00
+<div align="center">
+  <img src="assets/banner.png" alt="ImagePro Elite Banner" width="100%">
+  <br>
+  <h1>ImagePro Elite v5.00</h1>
+  <p><b>The gold standard for high-resiliency PHP image optimization.</b></p>
+  
+  [![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.1-777bb4.svg)](https://php.net)
+  [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+  [![Security](https://img.shields.io/badge/security-hardened-blue.svg)](SECURITY.md)
+  [![Contributions](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
+</div>
 
-[![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.1-777bb4.svg)](https://php.net)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Format](https://img.shields.io/badge/format-WebP%20Ready-blue.svg)](#)
+---
 
 **ImagePro Elite v5.00** is the pinnacle of PHP image optimization. Built with a **Hardened Security Layer**, **Intelligent Memory Scaling**, and **Enterprise Namespacing**.
 
