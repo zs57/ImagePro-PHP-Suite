@@ -1,30 +1,31 @@
-# ImagePro Elite v5.00
+# ImagePro v6.00 (Professional Library)
 
-**ImagePro Elite v5.00** is the pinnacle of PHP image optimization. Built with a **Hardened Security Layer**, **Intelligent Memory Scaling**, and **Enterprise Namespacing**.
-
----
-
-**ImagePro Elite v5.00** is the pinnacle of PHP image optimization. Built with a **Hardened Security Layer**, **Intelligent Memory Scaling**, and **Enterprise Namespacing**.
+**ImagePro v6.00** is a certified, production-ready image processing library for PHP 8.1+. It provides seamless abstraction between **GD** and **Imagick**, ensuring that your application remains functional across all server environments.
 
 ---
 
-## 🏛️ Elite Features
-- **Professional Namespace**: `ImagePro\Enterprise` for clean integration.
-- **Deep Mime-Sniffing**: Security layer to prevent malicious file execution.
-- **Auto-Memory Buffer**: Dynamically scales `memory_limit` to 512MB for large tasks.
-- **High-Failover Architecture**: Intelligent detection of GD/Imagick drivers.
+## 🏛️ Professional Standards
+- **PHP 8.1+ Compatibility**: Fully verified `GdImage` object management.
+- **Multi-Driver Parity**: Identical results whether using GD or Imagick.
+- **Configurable Resources**: Fine-grained control over memory limits and quality via `withMemoryLimit()`.
+- **Advanced Processing**: Full implementation of `resize()`, `filter()`, and `stripMetadata()`.
 
-## 🛠️ Quick Start (Namespaced)
+## 📂 Project Structure
+- `src/ImagePro.php` - The core multi-driver engine.
+- `src/docs.html` - Standalone Developer Manual.
+- `LICENSE` - MIT License.
+
+## 🛠️ Quick Start
 ```php
 require_once 'src/ImagePro.php';
 use ImagePro\Enterprise\ImagePro;
-use ImagePro\Enterprise\ImageFilter;
 
 ImagePro::open('source.jpg')
-    ->autoOptimize()
-    ->filter(ImageFilter::SHARPEN) // Elite Focus
-    ->convertToWebP('optimized.webp');
+    ->withMemoryLimit('256M')
+    ->resize(1200)
+    ->save('optimized.webp', quality: 85);
 ```
+
 This project is part of the **zs57 Open Source Initiative**.
 
 ## 📄 License
