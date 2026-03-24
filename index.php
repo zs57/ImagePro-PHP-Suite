@@ -40,10 +40,12 @@ $t = $trans[$lang];
 $uploadDir = 'uploads/';
 $processDir = 'processed/';
 $gdSupported = function_exists('gd_info');
+$imagickSupported = class_exists('Imagick');
+$engineReady = ($gdSupported || $imagickSupported);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
-    if (!$gdSupported) {
-        $error = ($lang == 'ar') ? "خطأ: مكتبة GD غير مفعلة في السيرفر. يرجى تفعيلها من ملف php.ini" : "Error: PHP GD library is not enabled on this server.";
+    if (!$engineReady) {
+        $error = ($lang == 'ar') ? "خطأ: لم يتم العثور على مكتبة GD أو Imagick في السيرفر. يرجى تفعيل واحدة منهما في الاستضافة." : "Error: No supported image engine (GD or Imagick) found on this server.";
     } else {
         $file = $_FILES['image'];
         if($file['error'] == 0) {
@@ -97,6 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
             <a href="docs.html" style="color: var(--accent); font-size: 0.9rem; text-decoration: none; margin-top: 1rem; display: inline-block;"><?php echo $t['docs']; ?> →</a>
         </header>
 
+        <?php if (isset($error)): ?>
+            <div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1.5rem; border-radius: 1rem; margin: 2rem 0; text-align: center; border: 1px solid rgba(239, 68, 68, 0.2); line-height: 1.6;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+                <strong><?php echo $error; ?></strong>
+            </div>
+        <?php endif; ?>
+
         <section class="upload-card">
             <form action="" method="POST" enctype="multipart/form-data" id="uploadForm">
                 <div class="file-input-wrapper" onclick="document.getElementById('imgFile').click()">
@@ -142,4 +151,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
         </footer>
     </div>
 </body>
-</html>
+</html 
