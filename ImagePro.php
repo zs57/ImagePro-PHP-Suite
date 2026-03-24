@@ -2,17 +2,11 @@
 
 declare(strict_types=1);
 
-/**
- * ImagePro v3.0 - Enterprise Image Optimization Suite
- * Fully refactored for PHP 8.1+ with EXIF handling, strict memory management, and Enums.
- */
-
-// --- Custom Exceptions ---
 class ImageProException extends \RuntimeException {}
 class ImageNotFoundException extends ImageProException {}
 class ImageProcessingException extends ImageProException {}
+class UnsupportedFormatException extends ImageProException {}
 
-// --- Enums for Type Safety ---
 enum ImageFilter: string {
     case GREYSCALE = 'grey';
     case SEPIA = 'sepia';
@@ -21,24 +15,18 @@ enum ImageFilter: string {
 }
 
 enum WatermarkPosition {
-    case TOP_LEFT;
-    case TOP_RIGHT;
-    case BOTTOM_LEFT;
-    case BOTTOM_RIGHT;
-    case CENTER;
+    case TOP_LEFT; case TOP_RIGHT; case BOTTOM_LEFT; case BOTTOM_RIGHT; case CENTER;
 }
 
 class ImagePro
 {
-    private $image; // Removed \GdImage type hint for compatibility
+    private $image; // Dynamic driver object (GdImage or Imagick)
     private array $info;
     private readonly string $sourcePath;
     private readonly int $type;
     private bool $isProgressive = true;
+    private string $driver = 'gd';
 
-    /**
-     * Static factory for cleaner instantiation
-     */
     public static function open(string $path): self
     {
         return new self($path);
@@ -46,24 +34,29 @@ class ImagePro
 
     private function __construct(string $sourcePath)
     {
-        if (!function_exists('gd_info')) {
-            throw new ImageProcessingException("PHP GD extension is not enabled on this server.");
-        }
         if (!file_exists($sourcePath) || !is_readable($sourcePath)) {
             throw new ImageNotFoundException("Source image not found or not readable: {$sourcePath}");
+        }
+
+        if (function_exists('gd_info')) {
+            $this->driver = 'gd';
+        } elseif (class_exists('Imagick')) {
+            $this->driver = 'imagick';
+        } else {
+            throw new ImageProcessingException("No supported image processing library (GD or Imagick) found on this server.");
         }
 
         $this->sourcePath = $sourcePath;
         $this->load();
     }
 
-    /**
-     * Always cleanup memory explicitly when object is destroyed
-     */
     public function __destruct()
     {
-        if (isset($this->image)) {
-            imagedestroy($this->image);
+        if ($this->driver === 'gd' && isset($this->image)) {
+            @imagedestroy($this->image);
+        } elseif ($this->driver === 'imagick' && isset($this->image)) {
+            $this->image->clear();
+            $this->image->destroy();
         }
     }
 
@@ -73,237 +66,105 @@ class ImagePro
         if ($info === false) {
             throw new ImageProcessingException("Invalid image file or unsupported format.");
         }
-
         $this->info = $info;
         $this->type = $this->info[2];
 
+        if ($this->driver === 'gd') {
+            $this->loadGd();
+        } else {
+            $this->loadImagick();
+        }
+    }
+
+    private function loadGd(): void
+    {
         $this->image = match ($this->type) {
             IMAGETYPE_JPEG => imagecreatefromjpeg($this->sourcePath),
-            IMAGETYPE_PNG => $this->loadPng(),
+            IMAGETYPE_PNG => imagecreatefrompng($this->sourcePath),
             IMAGETYPE_WEBP => imagecreatefromwebp($this->sourcePath),
-            default => throw new ImageProcessingException("Unsupported image type. Only JPEG, PNG, and WebP are allowed."),
+            default => throw new UnsupportedFormatException("Format not supported by GD."),
         };
-
-        if (!$this->image) {
-            throw new ImageProcessingException("Failed to create image object from file.");
-        }
-
-        // Fix rotation for images taken by mobile cameras
-        if ($this->type === IMAGETYPE_JPEG) {
-            $this->fixOrientation();
-        }
+        if (!$this->image) throw new ImageProcessingException("GD failed to load image.");
+        if ($this->type === IMAGETYPE_JPEG) $this->fixOrientation();
     }
 
-    private function loadPng(): \GdImage
+    private function loadImagick(): void
     {
-        $image = imagecreatefrompng($this->sourcePath);
-        if (!$image) {
-            throw new ImageProcessingException("Failed to load PNG image.");
-        }
-
-        imagepalettetotruecolor($image);
-        imagealphablending($image, true);
-        imagesavealpha($image, true);
-
-        return $image;
+        $this->image = new \Imagick($this->sourcePath);
     }
 
-    /**
-     * Reads EXIF data and rotates image correctly
-     */
     private function fixOrientation(): void
     {
-        if (!function_exists('exif_read_data')) {
-            return;
-        }
-
+        if (!function_exists('exif_read_data')) return;
         $exif = @exif_read_data($this->sourcePath);
-        if (empty($exif['Orientation'])) {
-            return;
-        }
-
-        $angle = match ($exif['Orientation']) {
-            3 => 180,
-            6 => -90,
-            8 => 90,
-            default => 0,
-        };
-
-        if ($angle !== 0) {
+        if (empty($exif['Orientation'])) return;
+        $angle = match ($exif['Orientation']) { 3 => 180, 6 => -90, 8 => 90, default => 0 };
+        if ($angle !== 0 && $this->driver === 'gd') {
             $rotated = imagerotate($this->image, $angle, 0);
-            if ($rotated !== false) {
-                imagedestroy($this->image); // Free old memory
-                $this->image = $rotated;
-            }
+            if ($rotated) { imagedestroy($this->image); $this->image = $rotated; }
         }
     }
 
-    public function resize(?int $width = null, ?int $height = null): self
+    public function autoOptimize(int $maxWidth = 1920): self
     {
-        if ($width === null && $height === null) {
-            throw new \InvalidArgumentException("Width and height cannot both be null.");
-        }
-
-        $origW = $this->getWidth();
-        $origH = $this->getHeight();
-
-        if ($width === null) {
-            $width = (int) round($origW * ($height / $origH));
-        } elseif ($height === null) {
-            $height = (int) round($origH * ($width / $origW));
-        }
-
-        $width = max(1, $width);
-        $height = max(1, $height);
-
-        $new = imagecreatetruecolor($width, $height);
-        $this->handleAlpha($new);
-        imagecopyresampled($new, $this->image, 0, 0, 0, 0, $width, $height, $origW, $origH);
-
-        imagedestroy($this->image); // Explicit memory management
-        $this->image = $new;
-
+        if ($this->getWidth() > $maxWidth) $this->resize($maxWidth);
         return $this;
     }
 
-    /**
-     * Professional crop function maintaining center focus
-     */
-    public function crop(int $width, int $height): self
+    public function getWidth(): int { return ($this->driver === 'gd') ? imagesx($this->image) : $this->image->getImageWidth(); }
+    public function getHeight(): int { return ($this->driver === 'gd') ? imagesy($this->image) : $this->image->getImageHeight(); }
+
+    public function resize(int $width, ?int $height = null): self
     {
-        $origW = $this->getWidth();
-        $origH = $this->getHeight();
-
-        $srcX = (int) max(0, ($origW - $width) / 2);
-        $srcY = (int) max(0, ($origH - $height) / 2);
-
-        $new = imagecreatetruecolor($width, $height);
-        $this->handleAlpha($new);
-        imagecopyresampled($new, $this->image, 0, 0, $srcX, $srcY, $width, $height, $width, $height);
-
-        imagedestroy($this->image); // Explicit memory management
-        $this->image = $new;
-
-        return $this;
-    }
-
-    /**
-     * Smart watermark with Enum positioning
-     */
-    public function watermark(
-        string $text,
-        WatermarkPosition $position = WatermarkPosition::BOTTOM_RIGHT,
-        int $size = 5,
-        int $opacity = 50
-    ): self {
-        $opacity = max(0, min(100, $opacity));
-        $alphaLevel = (int) round((100 - $opacity) * 1.27);
-        $color = imagecolorallocatealpha($this->image, 255, 255, 255, $alphaLevel);
-
-        if ($color !== false) {
-            $fontSize = max(1, min(5, $size));
-            $charWidth = imagefontwidth($fontSize);
-            $charHeight = imagefontheight($fontSize);
-            $textWidth = strlen($text) * $charWidth;
-
-            // Calculate coordinates based on position Enum
-            $padding = 10;
-            [$x, $y] = match ($position) {
-                WatermarkPosition::TOP_LEFT => [$padding, $padding],
-                WatermarkPosition::TOP_RIGHT => [$this->getWidth() - $textWidth - $padding, $padding],
-                WatermarkPosition::BOTTOM_LEFT => [$padding, $this->getHeight() - $charHeight - $padding],
-                WatermarkPosition::BOTTOM_RIGHT => [$this->getWidth() - $textWidth - $padding, $this->getHeight() - $charHeight - $padding],
-                WatermarkPosition::CENTER => [($this->getWidth() - $textWidth) / 2, ($this->getHeight() - $charHeight) / 2],
-            };
-
-            imagestring($this->image, $fontSize, (int)$x, (int)$y, $text, $color);
+        $origW = $this->getWidth(); $origH = $this->getHeight();
+        if (!$height) $height = (int)($origH * ($width / $origW));
+        
+        if ($this->driver === 'gd') {
+            $new = imagecreatetruecolor($width, $height);
+            imagecopyresampled($new, $this->image, 0, 0, 0, 0, $width, $height, $origW, $origH);
+            imagedestroy($this->image); $this->image = $new;
+        } else {
+            $this->image->resizeImage($width, $height, \Imagick::FILTER_LANCZOS, 1);
         }
-
         return $this;
     }
 
-    /**
-     * Apply filter using Enum for strict typing
-     */
     public function filter(ImageFilter $filter): self
     {
-        match ($filter) {
-            ImageFilter::GREYSCALE => imagefilter($this->image, IMG_FILTER_GRAYSCALE),
-            ImageFilter::SEPIA => $this->applySepia(),
-            ImageFilter::BLUR => imagefilter($this->image, IMG_FILTER_GAUSSIAN_BLUR),
-            ImageFilter::BRIGHTNESS => imagefilter($this->image, IMG_FILTER_BRIGHTNESS, 20),
-        };
-
+        if ($this->driver === 'gd') {
+            match ($filter) {
+                ImageFilter::GREYSCALE => imagefilter($this->image, IMG_FILTER_GRAYSCALE),
+                ImageFilter::SEPIA => $this->applySepiaGd(),
+                ImageFilter::BLUR => imagefilter($this->image, IMG_FILTER_GAUSSIAN_BLUR),
+                ImageFilter::BRIGHTNESS => imagefilter($this->image, IMG_FILTER_BRIGHTNESS, 20),
+            };
+        }
         return $this;
     }
 
-    private function applySepia(): void
+    private function applySepiaGd(): void
     {
         imagefilter($this->image, IMG_FILTER_GRAYSCALE);
         imagefilter($this->image, IMG_FILTER_COLORIZE, 90, 60, 40);
     }
 
-    public function autoOptimize(int $maxWidth = 1920): self
+    public function watermark(string $text, WatermarkPosition $pos = WatermarkPosition::BOTTOM_RIGHT): self
     {
-        if ($this->getWidth() > $maxWidth) {
-            $this->resize($maxWidth);
+        if ($this->driver === 'gd') {
+            $white = imagecolorallocate($this->image, 255, 255, 255);
+            imagestring($this->image, 5, 10, 10, $text, $white);
         }
         return $this;
     }
 
-    public function save(string $dest, int $quality = 85, ?int $type = null): bool
-    {
-        $type ??= $this->type;
-        $dir = dirname($dest);
-
-        // Smart directory creation
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new ImageProcessingException("Failed to create destination directory: {$dir}");
-            }
-        } elseif (!is_writable($dir)) {
-            throw new ImageProcessingException("Destination directory is not writable: {$dir}");
-        }
-
-        if ($this->isProgressive && $type === IMAGETYPE_JPEG) {
-            imageinterlace($this->image, true);
-        }
-
-        $quality = max(0, min(100, $quality));
-
-        return match ($type) {
-            IMAGETYPE_JPEG => imagejpeg($this->image, $dest, $quality),
-            IMAGETYPE_PNG => imagepng($this->image, $dest, (int) round((100 - $quality) / 100 * 9)),
-            IMAGETYPE_WEBP => imagewebp($this->image, $dest, $quality),
-            default => throw new ImageProcessingException("Cannot save: unsupported image type."),
-        };
-    }
-
     public function convertToWebP(string $dest, int $quality = 80): bool
     {
-        return $this->save($dest, $quality, IMAGETYPE_WEBP);
-    }
-
-    private function handleAlpha($new): void
-    {
-        if (in_array($this->type, [IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
-            imagealphablending($new, false);
-            imagesavealpha($new, true);
-            $transparent = imagecolorallocatealpha($new, 255, 255, 255, 127);
-
-            if ($transparent !== false) {
-                imagefilledrectangle($new, 0, 0, imagesx($new), imagesy($new), $transparent);
-            }
+        if ($this->driver === 'gd') {
+            return imagewebp($this->image, $dest, $quality);
+        } else {
+            $this->image->setImageFormat('webp');
+            $this->image->setCompressionQuality($quality);
+            return $this->image->writeImage($dest);
         }
-    }
-
-    public function getWidth(): int
-    {
-        return imagesx($this->image);
-    }
-
-    public function getHeight(): int
-    {
-        return imagesy($this->image);
     }
 }
