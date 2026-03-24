@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
         <header>
             <h1>ImagePro <span style="font-size: 1rem; vertical-align: middle; color: #60a5fa; border: 1px solid #60a5fa; padding: 2px 8px; border-radius: 4px;">v2.10</span></h1>
             <p style="color: var(--text-dim); margin-top: 0.5rem;"><?php echo $t['subtitle']; ?></p>
-            <a href="docs.php?lang=<?php echo $lang; ?>" style="color: var(--accent); font-size: 0.9rem; text-decoration: none; margin-top: 1rem; display: inline-block;"><?php echo $t['docs']; ?> →</a>
+            <a href="docs.html" style="color: var(--accent); font-size: 0.9rem; text-decoration: none; margin-top: 1rem; display: inline-block;"><?php echo $t['docs']; ?> →</a>
         </header>
 
         <section class="upload-card">
@@ -121,6 +121,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                 </div>
             </div>
 
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="<?php echo $results['processed']['url']; ?>" download class="btn-optimize" style="text-decoration: none;"><?php echo $t['download']; ?></a>
+            </div>
+        <?php endif; ?>
+
         <footer>
             <div style="margin-top: 5rem; text-align: center; border-top: 1px solid var(--border); padding-top: 2rem; color: var(--text-dim); font-size: 0.85rem;">
                 <p>Designed & Engineered by <span style="color: var(--accent); font-weight: 700;">zs57</span></p>
@@ -129,4 +134,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
         </footer>
     </div>
 </body>
-</html>
+</html>
