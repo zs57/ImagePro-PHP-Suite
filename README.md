@@ -21,11 +21,14 @@ We provide a standalone, high-performance manual for integration:
 - **Shared Hosting Perfect**: Zero-configuration required for most environments.
 
 ## 📂 Project Structure
-- `ImagePro.php` - The core multi-driver engine.
+- `src/ImagePro.php` - The core multi-driver engine.
 - `docs.html` - Standalone Developer Manual.
 - `LICENSE` - MIT License.
 
-## 🛠️ Developer: zs57
+## 🛠️ Quick Start
+```php
+require_once 'src/ImagePro.php';
+```
 This project is part of the **zs57 Open Source Initiative**.
 
 ## 📄 License
