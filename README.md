@@ -4,46 +4,29 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Format](https://img.shields.io/badge/format-WebP%20Ready-blue.svg)](#)
 
-**ImagePro** is a world-class, high-performance image optimization engine for PHP. Built for developers who demand **Enterprise-grade security**, **Type-safe logic (PHP 8.1 Enums)**, and **Extreme performance**.
+**ImagePro** is a world-class, driver-agnostic image optimization engine for PHP. Built for developers who demand **Enterprise-grade resiliency**, **GD/Imagick failover**, and **Type-safe logic**.
 
 ---
 
-## 🌍 Bilingual Documentation / التوثيق بالعربية
-Looking for Arabic instructions? View our [Bilingual Manual](docs.html).
-هل تبحث عن التعليمات بالعربية؟ تفضل بزيارة [دليل المستخدم المزدوج](docs.html).
+## 🌍 Standalone Documentation
+We provide a standalone, high-performance manual for integration:
+- [Bilingual Manual (docs.html)](docs.html) - Includes AR/EN instructions.
 
 ---
 
 ## 🚀 Key Features
-- **Modern PHP 8.1+ Core**: Built with Enums and Strict Typing for bulletproof execution.
-- **Extreme Compression**: Native WebP conversion reducing size by up to **85%** with zero visual loss.
-- **Enterprise Security**: Strict Mime-type validation and EXIF metadata sanitization.
-- **Watermark & Filters**: Built-in professional filter stack (Sepia, Blur, Greyscale) and alpha-watermarking.
-- **Auto-Magic Optimization**: Intelligent scaling and quality balancing for high-traffic platforms.
-
-## 🛠️ Quick Start
-```php
-require_once 'ImagePro.php';
-
-// Elegant Enterprise Syntax
-ImagePro::open('source.jpg')
-    ->autoOptimize()
-    ->filter(ImageFilter::SEPIA)
-    ->watermark('ENTERPRISE', WatermarkPosition::CENTER)
-    ->convertToWebP('optimized.webp', 80);
-```
+- **Auto-Driver Switching**: Seamlessly switches between **GD** and **Imagick** based on server availability.
+- **Modern PHP 8.1+ Core**: Built with Enums and Strict Typing.
+- **Extreme Compression**: Native WebP conversion reducing size by up to **85%**.
+- **Shared Hosting Perfect**: Zero-configuration required for most environments.
 
 ## 📂 Project Structure
-- `ImagePro.php` - The core optimization engine.
-- `index.php` - Interactive Bilingual Dashboard.
-- `docs.html` - Comprehensive Developer Manual.
-- `/assets` - Visual identity and styling.
+- `ImagePro.php` - The core multi-driver engine.
+- `docs.html` - Standalone Developer Manual.
+- `LICENSE` - MIT License.
 
-## 🛠️ Developer Spotlight: zs57
-This project is part of the **zs57 Open Source Initiative**, focused on bringing enterprise-grade tools to the global developer community. 
-
-- **Vision**: Security, Performance, and Professionalism.
-- **Support**: For custom integrations or enterprise support, contact **zs57** via GitHub.
+## 🛠️ Developer: zs57
+This project is part of the **zs57 Open Source Initiative**.
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
