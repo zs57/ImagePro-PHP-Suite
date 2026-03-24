@@ -36,7 +36,7 @@ ImagePro::open('source.jpg')
 ## 📂 Project Structure
 - `ImagePro.php` - The core optimization engine.
 - `index.php` - Interactive Bilingual Dashboard.
-- `docs.php` - Comprehensive Developer Manual.
+- `docs.html` - Comprehensive Developer Manual.
 - `/assets` - Visual identity and styling.
 
 ## 🛠️ Developer Spotlight: zs57
