@@ -125,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                 <a href="<?php echo $results['processed']['url']; ?>" download class="btn-optimize" style="text-decoration: none;"><?php echo $t['download']; ?></a>
             </div>
         <?php endif; ?>
+        <?php endif; ?>
 
         <footer>
             <div style="margin-top: 5rem; text-align: center; border-top: 1px solid var(--border); padding-top: 2rem; color: var(--text-dim); font-size: 0.85rem;">
